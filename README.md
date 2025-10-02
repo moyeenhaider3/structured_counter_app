@@ -16,30 +16,33 @@ Our architecture is divided into three main layers:
 
 ```mermaid
 graph TD
-    A[Presentation Layer] --> B(Domain Layer);
-    B --> C(Data Layer);
-
     subgraph Presentation Layer
-        D["Widgets<br>(CounterScreen)"]
-        E["State Management<br>(CounterProvider)"]
+        Widgets["Widgets<br>(CounterScreen)"]
+        Provider["State Management<br>(CounterProvider)"]
     end
 
     subgraph Domain Layer
-        F["Entities<br>(Counter)"]
-        G["Abstract Repositories<br>(CounterRepository)"]
+        AbstractRepo["Abstract Repositories<br>(CounterRepository)"]
+        Entities["Entities<br>(Counter)"]
     end
 
     subgraph Data Layer
-        H["Repository Implementations<br>(CounterRepositoryImpl)"]
-        I["Data Sources<br>(CounterLocalDataSource)"]
+        RepoImpl["Repository Implementations<br>(CounterRepositoryImpl)"]
+        DataSource["Data Sources<br>(CounterLocalDataSource)"]
     end
 
-    A --> B;
-    B --> C;
+    %% Dependency Arrows (point inwards to Domain)
+    Provider -- Depends on --> AbstractRepo
+    RepoImpl -- Implements --> AbstractRepo
 
-    D --> E;
-    E --> G;
-    H --> I;
+    %% Control/Data Flow Arrows
+    Widgets -- User Interaction --> Provider
+    Provider -- Calls --> AbstractRepo
+    AbstractRepo -- Fulfilled by --> RepoImpl
+    RepoImpl -- Gets data from --> DataSource
+    DataSource -- Returns data --> RepoImpl
+    RepoImpl -- Returns data --> Provider
+    Provider -- Updates --> Widgets
 ```
 
 ### Data Flow
