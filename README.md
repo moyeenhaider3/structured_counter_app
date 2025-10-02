@@ -20,18 +20,18 @@ graph TD
     B --> C(Data Layer);
 
     subgraph Presentation Layer
-        D[Widgets <br/> (CounterScreen)]
-        E[State Management <br/> (CounterProvider)]
+        D["Widgets<br>(CounterScreen)"]
+        E["State Management<br>(CounterProvider)"]
     end
 
     subgraph Domain Layer
-        F[Entities <br/> (Counter)]
-        G[Abstract Repositories <br/> (CounterRepository)]
+        F["Entities<br>(Counter)"]
+        G["Abstract Repositories<br>(CounterRepository)"]
     end
 
     subgraph Data Layer
-        H[Repository Implementations <br/> (CounterRepositoryImpl)]
-        I[Data Sources <br/> (CounterLocalDataSource)]
+        H["Repository Implementations<br>(CounterRepositoryImpl)"]
+        I["Data Sources<br>(CounterLocalDataSource)"]
     end
 
     A --> B;
