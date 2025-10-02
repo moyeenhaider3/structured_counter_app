@@ -84,158 +84,165 @@ lib/
 
 This is the core of the application. It is completely independent of any other layer and contains only pure business logic.
 
--   **Entities**: Plain Dart objects representing the core data structures.
+- **Entities**: Plain Dart objects representing the core data structures.
 
-    *`lib/src/domain/entities/counter.dart`*
-    ```dart
-    /// Represents the counter entity.
-    class Counter {
-      int value;
+  _`lib/src/domain/entities/counter.dart`_
 
-      Counter(this.value);
-    }
-    ```
+  ```dart
+  /// Represents the counter entity.
+  class Counter {
+    int value;
 
--   **Repositories (Abstract)**: Interfaces that define the contract for data operations. The domain layer does not care *how* the data is fetched, only that it *can* be fetched.
+    Counter(this.value);
+  }
+  ```
 
-    *`lib/src/domain/repositories/counter_repository.dart`*
-    ```dart
-    import 'package:structured_counter_app/src/domain/entities/counter.dart';
+- **Repositories (Abstract)**: Interfaces that define the contract for data operations. The domain layer does not care _how_ the data is fetched, only that it _can_ be fetched.
 
-    /// Abstract repository for counter operations.
-    abstract class CounterRepository {
-      /// Gets the current counter value.
-      Future<Counter> getCounter();
+  _`lib/src/domain/repositories/counter_repository.dart`_
 
-      /// Increments the counter value.
-      Future<void> incrementCounter();
-    }
-    ```
+  ```dart
+  import 'package:structured_counter_app/src/domain/entities/counter.dart';
+
+  /// Abstract repository for counter operations.
+  abstract class CounterRepository {
+    /// Gets the current counter value.
+    Future<Counter> getCounter();
+
+    /// Increments the counter value.
+    Future<void> incrementCounter();
+  }
+  ```
 
 ### 2. Data Layer
 
 This layer implements the abstract repositories defined in the domain layer. It handles the actual data fetching, whether from a database, a network API, or in-memory storage.
 
--   **Data Sources**: Responsible for fetching raw data. For this app, we use a simple in-memory data source.
+- **Data Sources**: Responsible for fetching raw data. For this app, we use a simple in-memory data source.
 
-    *`lib/src/data/datasources/counter_local_data_source.dart`*
-    ```dart
-    import 'package:structured_counter_app/src/domain/entities/counter.dart';
+  _`lib/src/data/datasources/counter_local_data_source.dart`_
 
-    /// Implementation of the local data source that stores the counter in memory.
-    class CounterLocalDataSourceImpl implements CounterLocalDataSource {
-      int _counter = 0;
+  ```dart
+  import 'package:structured_counter_app/src/domain/entities/counter.dart';
 
-      @override
-      Future<Counter> getCounter() async {
-        return Counter(_counter);
-      }
+  /// Implementation of the local data source that stores the counter in memory.
+  class CounterLocalDataSourceImpl implements CounterLocalDataSource {
+    int _counter = 0;
 
-      @override
-      Future<void> incrementCounter() async {
-        _counter++;
-      }
+    @override
+    Future<Counter> getCounter() async {
+      return Counter(_counter);
     }
-    ```
 
--   **Repository Implementations**: Concrete implementations of the repository interfaces from the domain layer. They use data sources to get the data.
-
-    *`lib/src/data/repositories/counter_repository_impl.dart`*
-    ```dart
-    import 'package:structured_counter_app/src/data/datasources/counter_local_data_source.dart';
-    import 'package:structured_counter_app/src/domain/entities/counter.dart';
-    import 'package:structured_counter_app/src/domain/repositories/counter_repository.dart';
-
-    class CounterRepositoryImpl implements CounterRepository {
-      final CounterLocalDataSource localDataSource;
-
-      CounterRepositoryImpl(this.localDataSource);
-
-      @override
-      Future<Counter> getCounter() {
-        return localDataSource.getCounter();
-      }
-
-      @override
-      Future<void> incrementCounter() {
-        return localDataSource.incrementCounter();
-      }
+    @override
+    Future<void> incrementCounter() async {
+      _counter++;
     }
-    ```
+  }
+  ```
+
+- **Repository Implementations**: Concrete implementations of the repository interfaces from the domain layer. They use data sources to get the data.
+
+  _`lib/src/data/repositories/counter_repository_impl.dart`_
+
+  ```dart
+  import 'package:structured_counter_app/src/data/datasources/counter_local_data_source.dart';
+  import 'package:structured_counter_app/src/domain/entities/counter.dart';
+  import 'package:structured_counter_app/src/domain/repositories/counter_repository.dart';
+
+  class CounterRepositoryImpl implements CounterRepository {
+    final CounterLocalDataSource localDataSource;
+
+    CounterRepositoryImpl(this.localDataSource);
+
+    @override
+    Future<Counter> getCounter() {
+      return localDataSource.getCounter();
+    }
+
+    @override
+    Future<void> incrementCounter() {
+      return localDataSource.incrementCounter();
+    }
+  }
+  ```
 
 ### 3. Presentation Layer
 
 This is the user-facing layer, containing all the UI elements and state management logic.
 
--   **State Management (Provider)**: The `CounterProvider` acts as a ViewModel. It communicates with the domain layer and exposes the state to the UI. We use `ChangeNotifier` with the `provider` package for its simplicity and efficiency.
+- **State Management (Provider)**: The `CounterProvider` acts as a ViewModel. It communicates with the domain layer and exposes the state to the UI. We use `ChangeNotifier` with the `provider` package for its simplicity and efficiency.
 
-    *`lib/src/presentation/providers/counter_provider.dart`*
-    ```dart
-    import 'package:flutter/material.dart';
-    import 'package:structured_counter_app/src/domain/repositories/counter_repository.dart';
+  _`lib/src/presentation/providers/counter_provider.dart`_
 
-    class CounterProvider extends ChangeNotifier {
-      final CounterRepository repository;
+  ```dart
+  import 'package:flutter/material.dart';
+  import 'package:structured_counter_app/src/domain/repositories/counter_repository.dart';
 
-      int _counter = 0;
-      int get counter => _counter;
+  class CounterProvider extends ChangeNotifier {
+    final CounterRepository repository;
 
-      CounterProvider({required this.repository}) {
-        _loadCounter();
-      }
+    int _counter = 0;
+    int get counter => _counter;
 
-      void _loadCounter() async {
-        final counter = await repository.getCounter();
-        _counter = counter.value;
-        notifyListeners();
-      }
-
-      void increment() async {
-        await repository.incrementCounter();
-        final counter = await repository.getCounter();
-        _counter = counter.value;
-        notifyListeners();
-      }
+    CounterProvider({required this.repository}) {
+      _loadCounter();
     }
-    ```
 
--   **Widgets (Screen)**: The UI components that the user sees. They listen to the provider for state changes and rebuild accordingly.
+    void _loadCounter() async {
+      final counter = await repository.getCounter();
+      _counter = counter.value;
+      notifyListeners();
+    }
 
-    *`lib/src/presentation/screens/counter_screen.dart`*
-    ```dart
-    import 'package:flutter/material.dart';
-    import 'package:provider/provider.dart';
-    import 'package:structured_counter_app/src/presentation/providers/counter_provider.dart';
+    void increment() async {
+      await repository.incrementCounter();
+      final counter = await repository.getCounter();
+      _counter = counter.value;
+      notifyListeners();
+    }
+  }
+  ```
 
-    class CounterScreen extends StatelessWidget {
-      // ... build method ...
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Consumer<CounterProvider>(
-              builder: (context, provider, child) => Text(
-                '${provider.counter}',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
+- **Widgets (Screen)**: The UI components that the user sees. They listen to the provider for state changes and rebuild accordingly.
+
+  _`lib/src/presentation/screens/counter_screen.dart`_
+
+  ```dart
+  import 'package:flutter/material.dart';
+  import 'package:provider/provider.dart';
+  import 'package:structured_counter_app/src/presentation/providers/counter_provider.dart';
+
+  class CounterScreen extends StatelessWidget {
+    // ... build method ...
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          const Text('You have pushed the button this many times:'),
+          Consumer<CounterProvider>(
+            builder: (context, provider, child) => Text(
+              '${provider.counter}',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Provider.of<CounterProvider>(context, listen: false).increment(),
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    }
-    ```
+    ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () => Provider.of<CounterProvider>(context, listen: false).increment(),
+      tooltip: 'Increment',
+      child: const Icon(Icons.add),
+    ),
+  }
+  ```
 
 ## Dependency Injection
 
 Dependencies are provided to the layers that need them. In this project, we use a simple manual dependency injection setup in `main.dart`.
 
-*`lib/main.dart`*
+_`lib/main.dart`_
+
 ```dart
 void main() {
   // 1. Data Layer
@@ -258,36 +265,37 @@ void main() {
 
 The architecture makes the app highly testable. We can test each layer in isolation.
 
--   **Widget Testing**: We can test the UI and its interaction with the provider.
+- **Widget Testing**: We can test the UI and its interaction with the provider.
 
-    *`test/widget_test.dart`*
-    ```dart
-    void main() {
-      testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-        // Dependencies
-        final CounterLocalDataSource localDataSource = CounterLocalDataSourceImpl();
-        final CounterRepository repository = CounterRepositoryImpl(localDataSource);
+  _`test/widget_test.dart`_
 
-        // Build our app
-        await tester.pumpWidget(
-          ChangeNotifierProvider(
-            create: (context) => CounterProvider(repository: repository),
-            child: const MaterialApp(home: CounterScreen()),
-          ),
-        );
+  ```dart
+  void main() {
+    testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+      // Dependencies
+      final CounterLocalDataSource localDataSource = CounterLocalDataSourceImpl();
+      final CounterRepository repository = CounterRepositoryImpl(localDataSource);
 
-        // Verify initial state
-        expect(find.text('0'), findsOneWidget);
+      // Build our app
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (context) => CounterProvider(repository: repository),
+          child: const MaterialApp(home: CounterScreen()),
+        ),
+      );
 
-        // Tap the button
-        await tester.tap(find.byIcon(Icons.add));
-        await tester.pump();
+      // Verify initial state
+      expect(find.text('0'), findsOneWidget);
 
-        // Verify updated state
-        expect(find.text('1'), findsOneWidget);
-      });
-    }
-    ```
+      // Tap the button
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pump();
+
+      // Verify updated state
+      expect(find.text('1'), findsOneWidget);
+    });
+  }
+  ```
 
 ## How to Run
 
